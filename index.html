@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chọn Thứ Tự Nguyện Vọng</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 15px;
+      background: #f1f5f9;
+      color: #333;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      min-height: calc(100vh - 30px);
+    }
+    
+    .left, .right {
+      padding: 25px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      height: fit-content;
+      min-height: 500px;
+    }
+    
+    .left h2, .right h2 {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      text-align: center;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #e2e8f0;
+    }
+    
+    .wish {
+      position: relative;
+      padding: 15px 15px 15px 45px;
+      margin: 10px 0;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: move;
+      user-select: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .wish.error {
+      background: #fef2f2;
+      border: 2px solid #f87171;
+      animation: shake 0.4s ease-in-out;
+    }
+    
+    .wish:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      border-color: #38bdf8;
+    }
+    
+    .wish.sortable-chosen {
+      transform: scale(1.03);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      border: 2px solid #f59e0b;
+      background: #fffbeb;
+    }
+    
+    .wish::before {
+      content: attr(data-order) ".";
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 700;
+      color: #1e3a8a;
+      font-size: 1.1rem;
+    }
+    
+    .school-NEU { color: #1e3a8a; font-weight: 600; }
+    .school-FTU { color: #065f46; font-weight: 600; }
+    .school-HUST { color: #991b1b; font-weight: 600; }
+    .school-PTIT { color: #3730a3; font-weight: 600; }
+    
+    .right table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+    
+    .right th, .right td {
+      border: 1px solid #e2e8f0;
+      padding: 15px;
+      text-align: left;
+      transition: all 0.3s ease;
+    }
+    
+    .right tbody tr:hover {
+      background-color: #f8fafc;
+      transform: translateX(2px);
+    }
+    
+    .right td .contenteditable:hover {
+      background-color: #f0f9ff;
+      cursor: text;
+    }
+    
+    .right td .contenteditable:focus {
+      background-color: #f0f9ff;
+      outline: 3px solid #38bdf8;
+      outline-offset: -3px;
+    }
+    
+    .right th {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    
+    .right th.neu { background: #bae6fd; color: #1e3a8a; }
+    .right th.ftu { background: #d1fae5; color: #065f46; }
+    .right th.hust { background: #fee2e2; color: #991b1b; }
+    .right th.ptit { background: #e0e7ff; color: #3730a3; }
+    .right td { background: #fafbfc; }
+    
+    .right h3.neu { color: #1e3a8a; font-family: 'Quicksand', sans-serif; font-weight: 700; }
+    .right h3.ftu { color: #065f46; font-family: 'Quicksand', sans-serif; font-weight: 700; }
+    .right h3.hust { color: #991b1b; font-family: 'Quicksand', sans-serif; font-weight: 700; }
+    .right h3.ptit { color: #3730a3; font-family: 'Quicksand', sans-serif; font-weight: 700; }
+    
+    .action-btn {
+      padding: 12px 24px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+    }
+    
+    .action-btn.add { 
+      background: #10b981;
+      color: white;
+    }
+    
+    .action-btn.reset { 
+      background: #ef4444;
+      color: white;
+    }
+    
+    .action-btn.export { 
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .action-btn.import { 
+      background: #8b5cf6;
+      color: white;
+    }
+    
+    .action-btn:hover { 
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .action-btn.add:hover {
+      background: #059669;
+    }
+    
+    .action-btn.reset:hover {
+      background: #dc2626;
+    }
+    
+    .action-btn.export:hover {
+      background: #2563eb;
+    }
+    
+    .action-btn.import:hover {
+      background: #7c3aed;
+    }
+    
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: 12px;
+      padding: 6px;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .delete-btn:hover {
+      background: #fee2e2;
+      color: #dc2626;
+      transform: scale(1.15);
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+    }
+    
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+    
+    .popup-content {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    
+    .popup.show .popup-content {
+      transform: scale(1);
+    }
+    
+    .popup-content h3 {
+      margin-top: 0;
+      color: #1e3a8a;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      text-align: center;
+      font-size: 1.3rem;
+    }
+    
+    .popup-content input, .popup-content select {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+    
+    .popup-content input:focus, .popup-content select:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+    }
+    
+    .popup-content button {
+      padding: 12px 24px;
+      margin: 10px 8px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      min-width: 100px;
+    }
+    
+    .popup-content button.confirm { 
+      background: #10b981;
+      color: white; 
+    }
+    
+    .popup-content button.cancel { 
+      background: #ef4444;
+      color: white; 
+    }
+    
+    .popup-content button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .add-btn-container {
+      text-align: center;
+      margin-top: 25px;
+    }
+    
+    .reset-btn-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .save-indicator {
+      position: fixed;
+      top: 25px;
+      right: 25px;
+      background: #10b981;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateX(100px);
+      transition: all 0.4s ease;
+      z-index: 1001;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .save-indicator.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    
+    @media (max-width: 1200px) {
+      .container {
+        max-width: 100%;
+        padding: 0 10px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        min-height: auto;
+      }
+      
+      .left, .right {
+        padding: 20px;
+        min-height: auto;
+      }
+      
+      .left h2, .right h2 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+      }
+      
+      .wish {
+        padding: 12px 12px 12px 40px;
+        margin: 8px 0;
+      }
+      
+      .right th, .right td {
+        padding: 12px 8px;
+        font-size: 0.9rem;
+      }
+      
+      .popup-content {
+        width: 95%;
+        padding: 25px;
+      }
+      
+      .save-indicator {
+        top: 15px;
+        right: 15px;
+        font-size: 12px;
+        padding: 8px 16px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 5px;
+      }
+      
+      .left, .right {
+        padding: 15px;
+        border-radius: 12px;
+      }
+      
+      .wish {
+        padding: 10px 10px 10px 35px;
+        font-size: 0.9rem;
+      }
+      
+      .wish::before {
+        left: 12px;
+        font-size: 1rem;
+      }
+      
+      .right th, .right td {
+        padding: 10px 6px;
+        font-size: 0.85rem;
+      }
+      
+      .action-btn {
+        padding: 10px 20px;
+        font-size: 13px;
+      }
+      
+      .popup-content {
+        padding: 20px;
+      }
+      
+      .popup-content h3 {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="save-indicator" id="save-indicator">
+    ✓ Đã lưu
+  </div>
+  
+  <div class="container">
+    <div class="left">
+      <h2>Chọn Thứ Tự Nguyện Vọng</h2>
+      <div id="wish-list"></div>
+    </div>
+    <div class="right">
+      <h2>Nguyện Vọng Đã Đăng Ký</h2>
+      <div id="school-tables"></div>
+      <div class="add-btn-container">
+        <button class="action-btn add" onclick="showAddPopup()">Thêm ngành mới</button>
+        <button class="action-btn export" onclick="exportData()">Xuất dữ liệu</button>
+        <button class="action-btn import" onclick="document.getElementById('import-file').click()">Nhập dữ liệu</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+      </div>
+      <div class="reset-btn-container">
+        <button class="action-btn reset" onclick="resetData()">Khôi phục mặc định</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="add-popup" class="popup">
+    <div class="popup-content">
+      <h3>Thêm Nguyện Vọng</h3>
+      <input type="text" id="new-major" placeholder="Tên ngành">
+      <select id="new-school">
+        <option value="NEU">NEU</option>
+        <option value="FTU">FTU</option>
+        <option value="HUST">HUST</option>
+        <option value="PTIT">PTIT</option>
+      </select>
+      <button class="confirm" onclick="confirmAdd()">Thêm</button>
+      <button class="cancel" onclick="closePopup('add-popup')">Hủy</button>
+    </div>
+  </div>
+  
+  <div id="delete-popup" class="popup">
+    <div class="popup-content">
+      <h3>Xác Nhận Xóa</h3>
+      <p>Bạn có chắc muốn xóa ngành "<span id="delete-major"></span>"?</p>
+      <button class="confirm" onclick="confirmDelete()">Xác nhận</button>
+      <button class="cancel" onclick="closePopup('delete-popup')">Hủy</button>
+    </div>
+  </div>
+  
+  <script>
+    const initialWishes = [
+      { id: 'khmt-neu', name: 'Khoa học máy tính', school: 'NEU' },
+      { id: 'clc01-neu', name: 'Chương trình Chất lượng cao 01', school: 'NEU' },
+      { id: 'att-neu', name: 'An toàn thông tin', school: 'NEU' },
+      { id: 'cntt-neu', name: 'Công nghệ thông tin', school: 'NEU' },
+      { id: 'ttnt-neu', name: 'Trí tuệ nhân tạo', school: 'NEU' },
+      { id: 'khdl-neu', name: 'Khoa học dữ liệu', school: 'NEU' },
+      { id: 'ktpm-neu', name: 'Kỹ thuật phần mềm', school: 'NEU' },
+      { id: 'clc03-neu', name: 'Chương trình Chất lượng cao 03', school: 'NEU' },
+      { id: 'ba-neu', name: 'Phân tích kinh doanh (BA)', school: 'NEU' },
+      { id: 'httql-neu', name: 'Hệ thống thông tin quản lý', school: 'NEU' },
+      { id: 'dhnnqt-ftu', name: 'Chương trình ĐHNNQT Khoa học máy tính và Dữ liệu trong kinh tế và kinh doanh', school: 'FTU' },
+      { id: 'clc-ftu', name: 'Chương trình CLC Tiếng Anh Thương mại', school: 'FTU' },
+      { id: 'khdlttnt-hust', name: 'Khoa học Dữ liệu và Trí tuệ Nhân tạo (Chương trình tiên tiến)', school: 'HUST' },
+      { id: 'khmt-ptit', name: 'Khoa học máy tính (định hướng Khoa học dữ liệu)', school: 'PTIT' },
+      { id: 'att-ptit', name: 'An toàn thông tin', school: 'PTIT' }
+    ];
+
+    const initialSchools = {
+      NEU: [
+        'Khoa học máy tính - NEU',
+        'Chương trình Chất lượng cao 01 - NEU',
+        'An toàn thông tin - NEU',
+        'Công nghệ thông tin - NEU',
+        'Trí tuệ nhân tạo - NEU',
+        'Khoa học dữ liệu - NEU',
+        'Kỹ thuật phần mềm - NEU',
+        'Chương trình Chất lượng cao 03 - NEU',
+        'Phân tích kinh doanh (BA) - NEU',
+        'Hệ thống thông tin quản lý - NEU'
+      ],
+      FTU: [
+        'Chương trình ĐHNNQT Khoa học máy tính và Dữ liệu trong kinh tế và kinh doanh - FTU',
+        'Chương trình CLC Tiếng Anh Thương mại - FTU'
+      ],
+      HUST: [
+        'Khoa học Dữ liệu và Trí tuệ Nhân tạo (Chương trình tiên tiến) - HUST'
+      ],
+      PTIT: [
+        'Khoa học máy tính (định hướng Khoa học dữ liệu) - PTIT',
+        'An toàn thông tin - PTIT'
+      ]
+    };
+
+    let wishes = [...initialWishes];
+    let schools = JSON.parse(JSON.stringify(initialSchools));
+    let deleteTarget = null;
+
+    function saveData() {
+      localStorage.setItem('wishes', JSON.stringify(wishes));
+      localStorage.setItem('schools', JSON.stringify(schools));
+      
+      const indicator = document.getElementById('save-indicator');
+      indicator.classList.add('show');
+      setTimeout(() => {
+        indicator.classList.remove('show');
+      }, 2000);
+    }
+
+    function loadData() {
+      const savedWishes = localStorage.getItem('wishes');
+      const savedSchools = localStorage.getItem('schools');
+      if (savedWishes) wishes = JSON.parse(savedWishes);
+      if (savedSchools) schools = JSON.parse(savedSchools);
+    }
+
+    function resetData() {
+      if (confirm('Bạn có chắc muốn khôi phục dữ liệu mặc định? Tất cả thay đổi sẽ bị xóa!')) {
+        wishes = [...initialWishes];
+        schools = JSON.parse(JSON.stringify(initialSchools));
+        localStorage.removeItem('wishes');
+        localStorage.removeItem('schools');
+        renderWishList();
+        renderSchoolTables();
+      }
+    }
+
+    function exportData() {
+      const data = { wishes, schools };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'wishes-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.wishes && data.schools) {
+            wishes = data.wishes;
+            schools = data.schools;
+            saveData();
+            renderWishList();
+            renderSchoolTables();
+            alert('Dữ liệu đã được nhập thành công!');
+          } else {
+            alert('File không hợp lệ!');
+          }
+        } catch (err) {
+          alert('Lỗi khi nhập dữ liệu: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function checkWishOrder() {
+      const errors = new Set();
+      for (const school in schools) {
+        const schoolWishes = wishes.filter(w => w.school === school).map(w => w.name + ' - ' + w.school);
+        const correctOrder = schools[school];
+        let lastIndex = -1;
+        for (const major of correctOrder) {
+          const currentIndex = schoolWishes.indexOf(major);
+          if (currentIndex !== -1 && currentIndex < lastIndex) {
+            schoolWishes.forEach(m => errors.add(m));
+            break;
+          }
+          lastIndex = currentIndex;
+        }
+      }
+      return errors;
+    }
+
+    function renderWishList() {
+      const wishList = document.getElementById('wish-list');
+      wishList.innerHTML = '';
+      const errors = checkWishOrder();
+      wishes.forEach((wish, index) => {
+        const div = document.createElement('div');
+        div.className = `wish ${errors.has(wish.name + ' - ' + wish.school) ? 'error' : ''}`;
+        div.innerHTML = `${wish.name} <span class="school-${wish.school}"> - ${wish.school}</span>`;
+        div.setAttribute('data-order', index + 1);
+        wishList.appendChild(div);
+      });
+      Sortable.create(wishList, {
+        animation: 150,
+        onEnd: function (evt) {
+          const oldIndex = evt.oldIndex;
+          const newIndex = evt.newIndex;
+          const movedWish = wishes.splice(oldIndex, 1)[0];
+          wishes.splice(newIndex, 0, movedWish);
+          renderWishList();
+          saveData();
+        }
+      });
+    }
+
+    function renderSchoolTables() {
+      const tableContainer = document.getElementById('school-tables');
+      tableContainer.innerHTML = '';
+
+      for (const school in schools) {
+        const h3 = document.createElement('h3');
+        h3.className = school.toLowerCase();
+        h3.textContent = `Nguyện vọng trường ${school}`;
+        
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+        
+        thead.innerHTML = `<tr><th class="${school.toLowerCase()}">Thứ tự</th><th class="${school.toLowerCase()}">Ngành</th></tr>`;
+
+        schools[school].forEach((major, index) => {
+          const [name, schoolName] = major.split(' - ');
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td>
+              <span class="contenteditable" contenteditable="true" onblur="updateMajor('${major}', this.innerText, '${school}')">${name}</span>
+              <span class="school-${school}"> - ${schoolName}</span>
+              <button class="delete-btn" onclick="showDeletePopup('${major}')" title="Xóa ngành" aria-label="Xóa ngành ${major}">-</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        
+        tableContainer.appendChild(h3);
+        tableContainer.appendChild(table);
+      }
+    }
+
+    function showAddPopup() {
+      const popup = document.getElementById('add-popup');
+      popup.style.display = 'flex';
+      setTimeout(() => popup.classList.add('show'), 10);
+      document.getElementById('new-school').value = 'NEU';
+    }
+
+    function showDeletePopup(major) {
+      deleteTarget = major;
+      document.getElementById('delete-major').textContent = major;
+      const popup = document.getElementById('delete-popup');
+      popup.style.display = 'flex';
+      setTimeout(() => popup.classList.add('show'), 10);
+    }
+
+    function closePopup(popupId) {
+      const popup = document.getElementById(popupId);
+      popup.classList.remove('show');
+      setTimeout(() => {
+        popup.style.display = 'none';
+      }, 300);
+      document.getElementById('new-major').value = '';
+      deleteTarget = null;
+    }
+
+    function confirmAdd() {
+      const newName = document.getElementById('new-major').value.trim();
+      const school = document.getElementById('new-school').value;
+      
+      if (!newName) {
+        alert('Vui lòng nhập tên ngành!');
+        return;
+      }
+      
+      const fullMajor = `${newName} - ${school}`;
+      if (schools[school].includes(fullMajor)) {
+        alert('Ngành này đã tồn tại!');
+        return;
+      }
+
+      schools[school].push(fullMajor);
+      wishes.push({ id: `${newName.toLowerCase().replace(/\s/g, '-')}-${school.toLowerCase()}`, name: newName, school });
+      renderWishList();
+      renderSchoolTables();
+      saveData();
+      closePopup('add-popup');
+    }
+
+    function confirmDelete() {
+      const [name, school] = deleteTarget.split(' - ');
+      schools[school] = schools[school].filter(m => m !== deleteTarget);
+      wishes = wishes.filter(w => w.name !== name || w.school !== school);
+      renderWishList();
+      renderSchoolTables();
+      saveData();
+      closePopup('delete-popup');
+    }
+
+    function updateMajor(oldMajor, newName, school) {
+      newName = newName.trim();
+      const oldName = oldMajor.split(' - ')[0];
+      
+      if (!newName) {
+        alert('Tên ngành không được để trống!');
+        renderSchoolTables();
+        return;
+      }
+      
+      const fullMajor = `${newName} - ${school}`;
+      if (newName !== oldName && schools[school].includes(fullMajor)) {
+        alert('Ngành này đã tồn tại!');
+        renderSchoolTables();
+        return;
+      }
+      
+      if (newName !== oldName) {
+        schools[school] = schools[school].map(m => m === oldMajor ? fullMajor : m);
+        wishes = wishes.map(w => w.name === oldName && w.school === school ? { ...w, name: newName } : w);
+        renderWishList();
+        renderSchoolTables();
+        saveData();
+      }
+    }
+
+    loadData();
+    renderWishList();
+    renderSchoolTables();
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const originalOnEnd = Sortable.prototype.onEnd;
+      Sortable.prototype.onEnd = function(evt) {
+        if (originalOnEnd) originalOnEnd.call(this, evt);
+        saveData();
+      };
+
+      document.querySelectorAll('.popup').forEach(popup => {
+        popup.addEventListener('click', function(event) {
+          if (event.target === popup) {
+            closePopup(popup.id);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
